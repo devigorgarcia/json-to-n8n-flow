@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { 
   Form,
   FormControl,
@@ -17,6 +17,8 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
 // Interface para os dados do cliente
 interface ClientFormData {
@@ -70,19 +72,31 @@ const defaultValues: ClientFormData = {
 
 const N8nWebhook: React.FC = () => {
   const { toast } = useToast();
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [webhookUrl, setWebhookUrl] = useState<string>('https://f7d3-179-83-205-111.ngrok-free.app');
+  const [webhookPath, setWebhookPath] = useState<string>('/rest/workflows/CYnjPJv2MF7Xmeou/run');
   const [loading, setLoading] = useState<boolean>(false);
+  const [showWebhookHelp, setShowWebhookHelp] = useState<boolean>(false);
   
   const form = useForm<ClientFormData>({
     defaultValues
   });
+
+  const getFullWebhookUrl = () => {
+    // Remove trailing slash from base URL if it exists
+    const baseUrl = webhookUrl.endsWith('/') ? webhookUrl.slice(0, -1) : webhookUrl;
+    
+    // Make sure path starts with a slash
+    const path = webhookPath.startsWith('/') ? webhookPath : `/${webhookPath}`;
+    
+    return `${baseUrl}${path}`;
+  };
 
   const handleSendToN8n = async (data: ClientFormData) => {
     if (!webhookUrl) {
       toast({
         variant: "destructive",
         title: "URL do webhook não fornecida",
-        description: "Por favor, insira a URL do webhook do n8n"
+        description: "Por favor, insira a URL base do webhook do n8n"
       });
       return;
     }
@@ -90,8 +104,11 @@ const N8nWebhook: React.FC = () => {
     setLoading(true);
     
     try {
+      const fullWebhookUrl = getFullWebhookUrl();
+      console.log("Enviando dados para:", fullWebhookUrl);
+      
       // Enviar para o webhook
-      await fetch(webhookUrl, {
+      await fetch(fullWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,16 +157,52 @@ const N8nWebhook: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="webhook-url">URL do Webhook N8N</Label>
+                <Label htmlFor="webhook-url">URL Base do Webhook N8N</Label>
                 <Input
                   id="webhook-url"
-                  placeholder="https://n8n.exemplo.com/webhook/..."
+                  placeholder="https://n8n.exemplo.com/"
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Insira a URL do webhook fornecida pela sua instância do n8n
+                  Insira a URL base do ngrok (ex: https://f7d3-179-83-205-111.ngrok-free.app)
                 </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="webhook-path">Caminho do Endpoint de Workflow</Label>
+                <Input
+                  id="webhook-path"
+                  placeholder="/rest/workflows/SEU_ID/run"
+                  value={webhookPath}
+                  onChange={(e) => setWebhookPath(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Insira o caminho do workflow (ex: /rest/workflows/CYnjPJv2MF7Xmeou/run)
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-sm underline ml-1"
+                    onClick={() => setShowWebhookHelp(!showWebhookHelp)}
+                  >
+                    {showWebhookHelp ? 'Esconder ajuda' : 'Ver ajuda'}
+                  </Button>
+                </p>
+                
+                {showWebhookHelp && (
+                  <Alert className="mt-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Dicas para resolver o erro 404</AlertTitle>
+                    <AlertDescription className="mt-2">
+                      <p className="mb-2">
+                        Segundo os logs do ngrok, a URL <code>/rest/workflows/CYnjPJv2MF7Xmeou/run</code> está funcionando corretamente (retornando 200 OK).
+                        Tente usar esse caminho em vez de enviar para a raiz "/".
+                      </p>
+                      <p>
+                        URL completa que será usada: <code>{getFullWebhookUrl()}</code>
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
               
               <Form {...form}>
@@ -192,7 +245,7 @@ const N8nWebhook: React.FC = () => {
                           <FormItem>
                             <FormLabel>Endereço da Empresa</FormLabel>
                             <FormControl>
-                              <Input placeholder="Endereço Completo" {...field} />
+                              <Textarea placeholder="Endereço Completo" rows={3} {...field} />
                             </FormControl>
                           </FormItem>
                         )}
@@ -262,7 +315,7 @@ const N8nWebhook: React.FC = () => {
                           <FormItem>
                             <FormLabel>Endereço</FormLabel>
                             <FormControl>
-                              <Input placeholder="Endereço Completo" {...field} />
+                              <Textarea placeholder="Endereço Completo" rows={3} {...field} />
                             </FormControl>
                           </FormItem>
                         )}
