@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, ImageIcon } from 'lucide-react';
 import { 
   Form,
   FormControl,
@@ -43,6 +43,7 @@ interface ClientFormData {
   contrato_dia: string;
   contrato_mes: string;
   qtde_parcelamento_texto: string;
+  logo: string | null; // Novo campo para o logo
 }
 
 // Valores iniciais do formulário
@@ -67,15 +68,18 @@ const defaultValues: ClientFormData = {
   valor_parcela_texto: "mil reais",
   contrato_dia: "29",
   contrato_mes: "abril",
-  qtde_parcelamento_texto: "seis"
+  qtde_parcelamento_texto: "seis",
+  logo: null
 };
 
 const N8nWebhook: React.FC = () => {
   const { toast } = useToast();
-  const [webhookUrl, setWebhookUrl] = useState<string>('https://f7d3-179-83-205-111.ngrok-free.app');
-  const [webhookPath, setWebhookPath] = useState<string>('/rest/workflows/CYnjPJv2MF7Xmeou/run');
+  const [webhookUrl, setWebhookUrl] = useState<string>('https://bb10-179-83-205-111.ngrok-free.app');
+  const [webhookPath, setWebhookPath] = useState<string>('/webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb');
   const [loading, setLoading] = useState<boolean>(false);
   const [showWebhookHelp, setShowWebhookHelp] = useState<boolean>(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<ClientFormData>({
     defaultValues
@@ -89,6 +93,21 @@ const N8nWebhook: React.FC = () => {
     const path = webhookPath.startsWith('/') ? webhookPath : `/${webhookPath}`;
     
     return `${baseUrl}${path}`;
+  };
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (file) {
+      // Converter para Base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setLogoPreview(base64String);
+        form.setValue('logo', base64String);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSendToN8n = async (data: ClientFormData) => {
@@ -165,20 +184,20 @@ const N8nWebhook: React.FC = () => {
                   onChange={(e) => setWebhookUrl(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Insira a URL base do ngrok (ex: https://f7d3-179-83-205-111.ngrok-free.app)
+                  Insira a URL base do ngrok (ex: https://bb10-179-83-205-111.ngrok-free.app)
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="webhook-path">Caminho do Endpoint de Workflow</Label>
+                <Label htmlFor="webhook-path">Caminho do Endpoint de Webhook</Label>
                 <Input
                   id="webhook-path"
-                  placeholder="/rest/workflows/SEU_ID/run"
+                  placeholder="/webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb"
                   value={webhookPath}
                   onChange={(e) => setWebhookPath(e.target.value)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Insira o caminho do workflow (ex: /rest/workflows/CYnjPJv2MF7Xmeou/run)
+                  Insira o caminho do webhook (ex: /webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb)
                   <Button 
                     variant="link" 
                     className="p-0 h-auto text-sm underline ml-1"
@@ -191,14 +210,13 @@ const N8nWebhook: React.FC = () => {
                 {showWebhookHelp && (
                   <Alert className="mt-2">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Dicas para resolver o erro 404</AlertTitle>
+                    <AlertTitle>Dicas para configuração do webhook</AlertTitle>
                     <AlertDescription className="mt-2">
                       <p className="mb-2">
-                        Segundo os logs do ngrok, a URL <code>/rest/workflows/CYnjPJv2MF7Xmeou/run</code> está funcionando corretamente (retornando 200 OK).
-                        Tente usar esse caminho em vez de enviar para a raiz "/".
+                        URL completa que será usada: <code>{getFullWebhookUrl()}</code>
                       </p>
                       <p>
-                        URL completa que será usada: <code>{getFullWebhookUrl()}</code>
+                        Certifique-se de que o caminho do webhook está configurado corretamente no n8n.
                       </p>
                     </AlertDescription>
                   </Alert>
@@ -207,6 +225,41 @@ const N8nWebhook: React.FC = () => {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSendToN8n)} className="space-y-6">
+                  {/* Logo Upload Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Logo da Empresa</h3>
+                    
+                    <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 bg-gray-50 cursor-pointer"
+                         onClick={() => fileInputRef.current?.click()}>
+                      {logoPreview ? (
+                        <div className="space-y-4 w-full flex flex-col items-center">
+                          <img 
+                            src={logoPreview} 
+                            alt="Logo Preview" 
+                            className="max-h-32 object-contain"
+                          />
+                          <p className="text-sm text-blue-600">Clique para alterar a imagem</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 flex flex-col items-center">
+                          <div className="p-3 rounded-full bg-blue-50">
+                            <ImageIcon className="h-8 w-8 text-blue-500" />
+                          </div>
+                          <p className="text-sm font-medium">Clique para fazer upload da logo</p>
+                          <p className="text-xs text-muted-foreground">SVG, PNG ou JPG (max. 5MB)</p>
+                        </div>
+                      )}
+                      <Input
+                        ref={fileInputRef}
+                        id="logo"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoChange}
+                      />
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Dados da Empresa */}
                     <div className="space-y-4">
