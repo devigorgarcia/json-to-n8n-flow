@@ -1,158 +1,38 @@
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
-import { useToast } from '@/components/ui/use-toast';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, AlertTriangle, ImageIcon } from 'lucide-react';
-import { 
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from 'lucide-react';
+import { Form } from '@/components/ui/form';
 
-// Interface para os dados do cliente
-interface ClientFormData {
-  nome_cliente: string;
-  empresa_nome: string;
-  empresa_endereco: string;
-  empresa_cnpj: string;
-  representante_nome: string;
-  representante_estado_civil: string;
-  representante_cpf: string;
-  representante_endereco: string;
-  representante_telefone: string;
-  entrada_prazo: string;
-  desenvolvimento_prazo: string;
-  revisao_prazo: string;
-  pagamento_valor: string;
-  pagamento_texto: string;
-  qtde_parcelamento: string;
-  quantidade_parcelamento_texto: string;
-  valor_parcela: string;
-  valor_parcela_texto: string;
-  contrato_dia: string;
-  contrato_mes: string;
-  qtde_parcelamento_texto: string;
-  logo: string | null; // Novo campo para o logo
-}
+// Custom components
+import WebhookConfig from '@/components/n8n/WebhookConfig';
+import LogoUploader from '@/components/n8n/LogoUploader';
+import CompanyDataForm from '@/components/n8n/CompanyDataForm';
+import RepresentativeDataForm from '@/components/n8n/RepresentativeDataForm';
+import DeadlinesForm from '@/components/n8n/DeadlinesForm';
+import PaymentsForm from '@/components/n8n/PaymentsForm';
+import ContractDateForm from '@/components/n8n/ContractDateForm';
 
-// Valores iniciais do formulário
-const defaultValues: ClientFormData = {
-  nome_cliente: "Empresa ABC Ltda",
-  empresa_nome: "Empresa ABC Ltda",
-  empresa_endereco: "Av. Paulista, 1000, Bela Vista, São Paulo - SP, CEP: 01310-100",
-  empresa_cnpj: "82732340000171",
-  representante_nome: "João da Silva",
-  representante_estado_civil: "casado",
-  representante_cpf: "71469789078",
-  representante_endereco: "Rua das Flores, 123, Jardim Europa, São Paulo - SP, CEP: 01456-000",
-  representante_telefone: "(11) 98765-4321",
-  entrada_prazo: "5",
-  desenvolvimento_prazo: "20",
-  revisao_prazo: "5",
-  pagamento_valor: "6.000,00",
-  pagamento_texto: "seis mil reais",
-  qtde_parcelamento: "6",
-  quantidade_parcelamento_texto: "seis",
-  valor_parcela: "1.000,00",
-  valor_parcela_texto: "mil reais",
-  contrato_dia: "29",
-  contrato_mes: "abril",
-  qtde_parcelamento_texto: "seis",
-  logo: null
-};
+// Custom hook
+import { useN8nWebhook } from '@/hooks/useN8nWebhook';
 
 const N8nWebhook: React.FC = () => {
-  const { toast } = useToast();
-  const [webhookUrl, setWebhookUrl] = useState<string>('https://bb10-179-83-205-111.ngrok-free.app');
-  const [webhookPath, setWebhookPath] = useState<string>('/webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [showWebhookHelp, setShowWebhookHelp] = useState<boolean>(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const form = useForm<ClientFormData>({
-    defaultValues
-  });
-
-  const getFullWebhookUrl = () => {
-    // Remove trailing slash from base URL if it exists
-    const baseUrl = webhookUrl.endsWith('/') ? webhookUrl.slice(0, -1) : webhookUrl;
-    
-    // Make sure path starts with a slash
-    const path = webhookPath.startsWith('/') ? webhookPath : `/${webhookPath}`;
-    
-    return `${baseUrl}${path}`;
-  };
-
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (file) {
-      // Converter para Base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setLogoPreview(base64String);
-        form.setValue('logo', base64String);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSendToN8n = async (data: ClientFormData) => {
-    if (!webhookUrl) {
-      toast({
-        variant: "destructive",
-        title: "URL do webhook não fornecida",
-        description: "Por favor, insira a URL base do webhook do n8n"
-      });
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const fullWebhookUrl = getFullWebhookUrl();
-      console.log("Enviando dados para:", fullWebhookUrl);
-      
-      // Enviar para o webhook
-      await fetch(fullWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'no-cors', // Usar no-cors para evitar problemas de CORS
-        body: JSON.stringify(data)
-      });
-
-      toast({
-        title: "Solicitação enviada",
-        description: "Os dados foram enviados para processamento no n8n"
-      });
-
-      console.log("Dados enviados para o n8n:", data);
-    } catch (error) {
-      console.error("Erro ao enviar dados:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao enviar dados",
-        description: "Não foi possível enviar os dados para o n8n. Verifique o console para mais detalhes."
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    form,
+    webhookUrl,
+    setWebhookUrl,
+    webhookPath,
+    setWebhookPath,
+    loading,
+    showWebhookHelp,
+    setShowWebhookHelp,
+    logoPreview,
+    setLogoPreview,
+    handleSendToN8n,
+    getFullWebhookUrl
+  } = useN8nWebhook();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,375 +55,39 @@ const N8nWebhook: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="webhook-url">URL Base do Webhook N8N</Label>
-                <Input
-                  id="webhook-url"
-                  placeholder="https://n8n.exemplo.com/"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Insira a URL base do ngrok (ex: https://bb10-179-83-205-111.ngrok-free.app)
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="webhook-path">Caminho do Endpoint de Webhook</Label>
-                <Input
-                  id="webhook-path"
-                  placeholder="/webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb"
-                  value={webhookPath}
-                  onChange={(e) => setWebhookPath(e.target.value)}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Insira o caminho do webhook (ex: /webhook-test/111e73c7-b589-4521-a77a-00e06b0e56cb)
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto text-sm underline ml-1"
-                    onClick={() => setShowWebhookHelp(!showWebhookHelp)}
-                  >
-                    {showWebhookHelp ? 'Esconder ajuda' : 'Ver ajuda'}
-                  </Button>
-                </p>
-                
-                {showWebhookHelp && (
-                  <Alert className="mt-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Dicas para configuração do webhook</AlertTitle>
-                    <AlertDescription className="mt-2">
-                      <p className="mb-2">
-                        URL completa que será usada: <code>{getFullWebhookUrl()}</code>
-                      </p>
-                      <p>
-                        Certifique-se de que o caminho do webhook está configurado corretamente no n8n.
-                      </p>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+              <WebhookConfig 
+                webhookUrl={webhookUrl}
+                setWebhookUrl={setWebhookUrl}
+                webhookPath={webhookPath}
+                setWebhookPath={setWebhookPath}
+                showWebhookHelp={showWebhookHelp}
+                setShowWebhookHelp={setShowWebhookHelp}
+                getFullWebhookUrl={getFullWebhookUrl}
+              />
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSendToN8n)} className="space-y-6">
-                  {/* Logo Upload Section */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Logo da Empresa</h3>
-                    
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6 bg-gray-50 cursor-pointer"
-                         onClick={() => fileInputRef.current?.click()}>
-                      {logoPreview ? (
-                        <div className="space-y-4 w-full flex flex-col items-center">
-                          <img 
-                            src={logoPreview} 
-                            alt="Logo Preview" 
-                            className="max-h-32 object-contain"
-                          />
-                          <p className="text-sm text-blue-600">Clique para alterar a imagem</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 flex flex-col items-center">
-                          <div className="p-3 rounded-full bg-blue-50">
-                            <ImageIcon className="h-8 w-8 text-blue-500" />
-                          </div>
-                          <p className="text-sm font-medium">Clique para fazer upload da logo</p>
-                          <p className="text-xs text-muted-foreground">SVG, PNG ou JPG (max. 5MB)</p>
-                        </div>
-                      )}
-                      <Input
-                        ref={fileInputRef}
-                        id="logo"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleLogoChange}
-                      />
-                    </div>
-                  </div>
+                  <LogoUploader 
+                    form={form} 
+                    logoPreview={logoPreview} 
+                    setLogoPreview={setLogoPreview} 
+                  />
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Dados da Empresa */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Dados da Empresa</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="nome_cliente"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome do Cliente</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome do Cliente" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="empresa_nome"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome da Empresa</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome da Empresa" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="empresa_endereco"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Endereço da Empresa</FormLabel>
-                            <FormControl>
-                              <Textarea placeholder="Endereço Completo" rows={3} {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="empresa_cnpj"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CNPJ</FormLabel>
-                            <FormControl>
-                              <Input placeholder="00.000.000/0000-00" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {/* Dados do Representante */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Dados do Representante</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="representante_nome"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome Completo" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="representante_estado_civil"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Estado Civil</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Estado Civil" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="representante_cpf"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CPF</FormLabel>
-                            <FormControl>
-                              <Input placeholder="000.000.000-00" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="representante_endereco"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Endereço</FormLabel>
-                            <FormControl>
-                              <Textarea placeholder="Endereço Completo" rows={3} {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="representante_telefone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Telefone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="(00) 00000-0000" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    {/* Company & Representative Data */}
+                    <CompanyDataForm form={form} />
+                    <RepresentativeDataForm form={form} />
                   </div>
                   
-                  {/* Prazos e Pagamentos */}
+                  {/* Deadlines & Payments */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Prazos</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="entrada_prazo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prazo de Entrada (dias)</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="desenvolvimento_prazo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prazo de Desenvolvimento (dias)</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="revisao_prazo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prazo de Revisão (dias)</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Pagamentos</h3>
-                      
-                      <FormField
-                        control={form.control}
-                        name="pagamento_valor"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor Total</FormLabel>
-                            <FormControl>
-                              <Input placeholder="0.000,00" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="pagamento_texto"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor por Extenso</FormLabel>
-                            <FormControl>
-                              <Input placeholder="valor por extenso" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="qtde_parcelamento"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quantidade de Parcelas</FormLabel>
-                            <FormControl>
-                              <Input type="number" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="quantidade_parcelamento_texto"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Qtde. de Parcelas por Extenso</FormLabel>
-                            <FormControl>
-                              <Input placeholder="quantidade por extenso" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="valor_parcela"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor da Parcela</FormLabel>
-                            <FormControl>
-                              <Input placeholder="0.000,00" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="valor_parcela_texto"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor da Parcela por Extenso</FormLabel>
-                            <FormControl>
-                              <Input placeholder="valor por extenso" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <DeadlinesForm form={form} />
+                    <PaymentsForm form={form} />
                   </div>
                   
-                  {/* Data do Contrato */}
+                  {/* Contract Date */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="contrato_dia"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dia do Contrato</FormLabel>
-                          <FormControl>
-                            <Input placeholder="DD" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="contrato_mes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mês do Contrato</FormLabel>
-                          <FormControl>
-                            <Input placeholder="mês por extenso" {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                    <ContractDateForm form={form} />
                   </div>
                   
                   <Button 
