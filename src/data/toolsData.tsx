@@ -26,11 +26,11 @@ export const saasTools: SaaSToolType[] = [
     route: '/n8n-webhook'
   },
   {
-    id: 'analytics',
-    title: 'Analytics',
-    description: 'Visualize e analise os dados de performance do seu negócio',
+    id: 'auditoria',
+    title: 'Auditoria Gratuita',
+    description: 'Receba uma análise detalhada do seu site ou negócio',
     icon: <LucideBarChart size={24} />,
-    route: '/analytics'
+    route: '/auditoria'
   },
   {
     id: 'email-marketing',
