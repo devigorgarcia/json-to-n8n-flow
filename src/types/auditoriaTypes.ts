@@ -14,6 +14,10 @@ export interface AuditoriaFormData {
   lista_palavras_estrategicas: string[];
 }
 
+export interface AuditoriaFormSettings {
+  webhook_url: string;
+}
+
 export const defaultValues: AuditoriaFormData = {
   nome_site: "",
   pais: "Brasil",
@@ -24,4 +28,8 @@ export const defaultValues: AuditoriaFormData = {
   lista_servicos: [],
   lista_concorrentes: [],
   lista_palavras_estrategicas: []
+};
+
+export const defaultSettings: AuditoriaFormSettings = {
+  webhook_url: "https://n8n-hooks.studioartemis.co/webhook-test/f368ba4e-5bad-4a56-83c3-459cf572fbbd"
 };

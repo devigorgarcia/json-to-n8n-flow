@@ -3,10 +3,11 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, DownloadCloud } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from "@/components/ui/separator";
 import TagInput from '@/components/auditoria/TagInput';
 import { useAuditoria } from '@/hooks/useAuditoria';
 
@@ -14,9 +15,11 @@ const Auditoria: React.FC = () => {
   const {
     form,
     loading,
+    settings,
     handleSubmit,
     handleAddItem,
-    handleRemoveItem
+    handleRemoveItem,
+    handleChangeWebhookUrl
   } = useAuditoria();
 
   return (
@@ -41,6 +44,31 @@ const Auditoria: React.FC = () => {
           <CardContent>
             <Form {...form}>
               <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="mb-4">
+                  <FormLabel>URL do Webhook para envio</FormLabel>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={settings.webhook_url} 
+                      onChange={(e) => handleChangeWebhookUrl(e.target.value)} 
+                      placeholder="https://seu-webhook-url.com" 
+                      className="flex-1"
+                      required
+                    />
+                    <Button 
+                      variant="outline" 
+                      type="button"
+                      className="flex gap-2"
+                      title="Usar URL padrão"
+                      onClick={() => handleChangeWebhookUrl("https://n8n-hooks.studioartemis.co/webhook-test/f368ba4e-5bad-4a56-83c3-459cf572fbbd")}
+                    >
+                      <DownloadCloud className="h-4 w-4" />
+                      Padrão
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator className="my-6" />
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}

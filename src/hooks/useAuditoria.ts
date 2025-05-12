@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/ui/use-toast';
-import { AuditoriaFormData, defaultValues } from '@/types/auditoriaTypes';
+import { AuditoriaFormData, AuditoriaFormSettings, defaultValues, defaultSettings } from '@/types/auditoriaTypes';
 
 export const useAuditoria = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
-  const WEBHOOK_URL = 'https://n8n-hooks.studioartemis.co/webhook-test/f368ba4e-5bad-4a56-83c3-459cf572fbbd';
+  const [settings, setSettings] = useState<AuditoriaFormSettings>(defaultSettings);
   
   const form = useForm<AuditoriaFormData>({
     defaultValues
@@ -32,14 +32,27 @@ export const useAuditoria = () => {
     }
   };
 
+  const handleChangeWebhookUrl = (url: string) => {
+    setSettings(prev => ({ ...prev, webhook_url: url }));
+  };
+
   const handleSubmit = async (data: AuditoriaFormData) => {
+    if (!settings.webhook_url.trim()) {
+      toast({
+        variant: "destructive",
+        title: "URL do webhook é obrigatória",
+        description: "Por favor, insira a URL do webhook para enviar os dados.",
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      console.log("Enviando dados para:", WEBHOOK_URL);
+      console.log("Enviando dados para:", settings.webhook_url);
       console.log("Dados sendo enviados:", data);
       
-      const response = await fetch(WEBHOOK_URL, {
+      const response = await fetch(settings.webhook_url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,8 +83,10 @@ export const useAuditoria = () => {
   return {
     form,
     loading,
+    settings,
     handleSubmit: form.handleSubmit(handleSubmit),
     handleAddItem,
-    handleRemoveItem
+    handleRemoveItem,
+    handleChangeWebhookUrl
   };
 };
