@@ -9,7 +9,7 @@ export interface AuditoriaFormData {
   servico_produto: string;
   lista_servicos: string[];
   
-  // Entradas opcionais
+  // Entradas obrigatórias (changed from optional)
   lista_concorrentes: string[];
   lista_palavras_estrategicas: string[];
 }

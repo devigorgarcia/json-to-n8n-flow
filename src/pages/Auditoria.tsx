@@ -22,6 +22,19 @@ const Auditoria: React.FC = () => {
     handleChangeWebhookUrl
   } = useAuditoria();
 
+  // Calculate how many more concorrentes are needed
+  const concorrentesCount = form.watch('lista_concorrentes').length;
+  const concorrentesNeeded = 3 - concorrentesCount;
+  let concorrentesMessage = "";
+  
+  if (concorrentesNeeded > 0) {
+    concorrentesMessage = `Adicione mais ${concorrentesNeeded} concorrente${concorrentesNeeded !== 1 ? 's' : ''}`;
+  } else if (concorrentesNeeded === 0) {
+    concorrentesMessage = "Quantidade correta de concorrentes";
+  } else {
+    concorrentesMessage = "Remova " + Math.abs(concorrentesNeeded) + " concorrente(s)";
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -167,11 +180,13 @@ const Auditoria: React.FC = () => {
                 
                 <div className="space-y-4">
                   <TagInput 
-                    label="Concorrentes (opcional)"
+                    label={`Concorrentes (exatamente 3) - ${concorrentesMessage}`}
                     value={form.watch('lista_concorrentes')}
                     placeholder="Digite o nome ou site de um concorrente"
                     onAdd={(value) => handleAddItem('lista_concorrentes', value)}
                     onRemove={(value) => handleRemoveItem('lista_concorrentes', value)}
+                    isRequired={true}
+                    statusIndicator={concorrentesNeeded === 0 ? "success" : "warning"}
                   />
                 </div>
                 
@@ -188,7 +203,7 @@ const Auditoria: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full mt-6" 
-                  disabled={loading}
+                  disabled={loading || concorrentesNeeded !== 0}
                 >
                   {loading ? (
                     <>

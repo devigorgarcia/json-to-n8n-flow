@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,6 +17,17 @@ export const useAuditoria = () => {
     if (!value.trim()) return;
     
     const currentValues = form.getValues(fieldName) as string[];
+    
+    // For lista_concorrentes, limit to exactly 3 items
+    if (fieldName === 'lista_concorrentes' && currentValues.length >= 3) {
+      toast({
+        variant: "destructive",
+        title: "Limite de concorrentes atingido",
+        description: "Você só pode adicionar exatamente 3 concorrentes. Remova um para adicionar outro.",
+      });
+      return;
+    }
+    
     if (Array.isArray(currentValues) && !currentValues.includes(value)) {
       form.setValue(fieldName, [...currentValues, value]);
     }
@@ -41,6 +53,16 @@ export const useAuditoria = () => {
         variant: "destructive",
         title: "URL do webhook é obrigatória",
         description: "Por favor, insira a URL do webhook para enviar os dados.",
+      });
+      return;
+    }
+    
+    // Validate exactly 3 competitors
+    if (data.lista_concorrentes.length !== 3) {
+      toast({
+        variant: "destructive",
+        title: "Número incorreto de concorrentes",
+        description: "Por favor, insira exatamente 3 concorrentes para prosseguir.",
       });
       return;
     }

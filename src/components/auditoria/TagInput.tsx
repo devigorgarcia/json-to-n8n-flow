@@ -10,6 +10,8 @@ interface TagInputProps {
   placeholder: string;
   onAdd: (value: string) => void;
   onRemove: (value: string) => void;
+  isRequired?: boolean;
+  statusIndicator?: 'success' | 'warning' | 'error';
 }
 
 const TagInput: React.FC<TagInputProps> = ({ 
@@ -17,7 +19,9 @@ const TagInput: React.FC<TagInputProps> = ({
   value, 
   placeholder, 
   onAdd, 
-  onRemove 
+  onRemove,
+  isRequired = false,
+  statusIndicator
 }) => {
   const [inputValue, setInputValue] = useState('');
 
@@ -38,10 +42,31 @@ const TagInput: React.FC<TagInputProps> = ({
     }
   };
 
+  const getStatusColor = () => {
+    if (!statusIndicator) return '';
+    
+    switch (statusIndicator) {
+      case 'success':
+        return 'text-green-600';
+      case 'warning':
+        return 'text-amber-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-        {label}
+      <label className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        <span>{label}</span>
+        {isRequired && <span className="text-red-500">*</span>}
+        {statusIndicator && (
+          <span className={`text-xs ml-1 ${getStatusColor()}`}>
+            {statusIndicator === 'success' ? '(Completo)' : '(Incompleto)'}
+          </span>
+        )}
       </label>
       
       <div className="flex flex-wrap gap-2 mb-2">
@@ -70,6 +95,7 @@ const TagInput: React.FC<TagInputProps> = ({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
+          className={isRequired ? "border-amber-300 focus:border-amber-500" : ""}
         />
         <Button 
           type="button" 
