@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/components/ui/use-toast';
@@ -66,7 +65,7 @@ export const useAuditoria = () => {
         description: "Seus dados foram enviados com sucesso. Aguarde nosso retorno.",
       });
 
-      // Reset form
+      // Reset form only on successful submission
       form.reset(defaultValues);
     } catch (error) {
       console.error("Erro ao enviar dados:", error);
@@ -75,6 +74,7 @@ export const useAuditoria = () => {
         title: "Erro ao enviar dados",
         description: "Não foi possível enviar os dados para auditoria. Por favor, tente novamente mais tarde.",
       });
+      // Do not reset the form on error - this keeps user data in the form
     } finally {
       setLoading(false);
     }
